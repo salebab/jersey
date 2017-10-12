@@ -60,5 +60,6 @@
     <modules>
         <module>cdi2-se</module>
         <module>hk2</module>
+        <module>guice</module>
     </modules>
 </project>
