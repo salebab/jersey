@@ -1,11 +1,13 @@
 package org.glassfish.jersey.inject.guice;
 
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import org.glassfish.jersey.internal.inject.*;
 import org.glassfish.jersey.internal.util.ExtendedLogger;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,22 +20,29 @@ public class GuiceInjectionManager implements InjectionManager {
   private static final ExtendedLogger logger =
       new ExtendedLogger(Logger.getLogger(GuiceInjectionManager.class.getName()), Level.FINEST);
 
+  private final AbstractBinder binder = new AbstractBinder() {
+    @Override
+    protected void configure() {
+      // do nothing
+    }
+  };
+
   private Injector childInjector;
   private final Injector injector;
-  private final JerseyBindingsModule module;
+  private final List<Module> modules = new ArrayList<>();
 
   public GuiceInjectionManager(Injector injector) {
     logger.debugLog("Instanced.");
 
     this.injector = injector;
-    this.module = new JerseyBindingsModule();
   }
 
   @Override
   public void completeRegistration() {
     logger.debugLog("Registration is completed.");
-
-    childInjector = injector.createChildInjector(module);
+    binder.bind(Bindings.service(this).to(InjectionManager.class));
+    binder.install(new ContextInjectionResolverImpl.Binder(injector));
+    childInjector = injector.createChildInjector(new JerseyBindingsModule(binder, injector));
   }
 
   @Override
@@ -45,11 +54,7 @@ public class GuiceInjectionManager implements InjectionManager {
   public void register(Binding binding) {
     logger.debugLog("Registering binding. Contracts: {0}; Implementations: {1}",  binding.getContracts(), binding.getImplementationType());
 
-    if(binding.getImplementationType() == null) {
-      logger.debugLog("Implementation type NULL");
-    }
-
-    module.addBinding(binding);
+    binder.bind(binding);
   }
 
   @Override
@@ -61,26 +66,25 @@ public class GuiceInjectionManager implements InjectionManager {
 
   @Override
   public void register(Binder binder) {
-    logger.debugLog("START: Register each biding from binder {0}", binder);
-
-    binder.getBindings().forEach(this::register);
-
-    logger.debugLog("END: Register each biding from binder {0}", binder);
+    Bindings.getBindings(this, binder).forEach(this.binder::bind);
   }
 
   @Override
   public void register(Object provider) throws IllegalArgumentException {
-    throw new IllegalArgumentException("Not supported.");
+    if(!isRegistrable(provider.getClass())) {
+      throw new IllegalArgumentException("Provider is not registrable");
+    }
+
+    modules.add((Module) provider);
   }
 
   @Override
   public boolean isRegistrable(Class<?> clazz) {
-    return false;
+    return Module.class.isAssignableFrom(clazz);
   }
 
   @Override
   public <T> T createAndInitialize(Class<T> createMe) {
-    logger.debugLog("Creating and initializing {0}", createMe);
     return injector.getInstance(createMe);
   }
 
@@ -101,14 +105,14 @@ public class GuiceInjectionManager implements InjectionManager {
 
   @Override
   public <T> T getInstance(Class<T> contractOrImpl) {
-    logger.debugLog("Getting instance from childInjector for class '{0}'", contractOrImpl);
+    logger.debugLog("Getting instance from childInjector for class {0}", contractOrImpl.getName());
 
     return childInjector.getInstance(contractOrImpl);
   }
 
   @Override
   public <T> T getInstance(Type contractOrImpl) {
-    logger.debugLog("Getting instance from childInjector for type '{0}'", contractOrImpl);
+    logger.debugLog("Getting instance from childInjector for type {0}", contractOrImpl.getTypeName());
 
     return childInjector.getInstance((Class<T>) contractOrImpl);
   }
@@ -125,7 +129,7 @@ public class GuiceInjectionManager implements InjectionManager {
 
   @Override
   public <T> List<T> getAllInstances(Type contractOrImpl) {
-    logger.debugLog("Getting all instances for type '{0}'", contractOrImpl);
+    logger.debugLog("Getting all instances for type {0}", contractOrImpl);
     return null;
   }
 
@@ -142,5 +146,9 @@ public class GuiceInjectionManager implements InjectionManager {
   @Override
   public void preDestroy(Object preDestroyMe) {
 
+  }
+
+  public Injector getInjector() {
+    return injector;
   }
 }
