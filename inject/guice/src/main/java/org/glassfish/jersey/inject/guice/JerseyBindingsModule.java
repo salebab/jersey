@@ -1,9 +1,6 @@
 package org.glassfish.jersey.inject.guice;
 
 import com.google.inject.*;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Types;
 import org.glassfish.jersey.internal.inject.*;
@@ -64,20 +61,19 @@ public class JerseyBindingsModule extends AbstractModule {
 
     Provider supplierProvider = () -> injector.getInstance(binding.getSupplierClass());
 
+
     contracts.forEach(contract -> {
 
       Key k1 = (binding.getName() != null)
           ? Key.get(typeOfSupplier(contract), Names.named(binding.getName()))
           : Key.get(typeOfSupplier(contract));
-
       bind(k1)
           .toProvider(supplierProvider)
           .in(transformScope(binding.getSupplierScope()));
 
-      TypeLiteral tl2 = TypeLiteral.get(contract);
       Key k2 = (binding.getName() != null)
-          ? Key.get(tl2, Names.named(binding.getName()))
-          : Key.get(tl2);
+          ? Key.get(TypeLiteral.get(contract), Names.named(binding.getName()))
+          : Key.get(TypeLiteral.get(contract));
       bind(k2)
           .toProvider(() -> injector.getInstance(binding.getSupplierClass()).get())
           .in(transformScope(binding.getScope()));
@@ -87,7 +83,6 @@ public class JerseyBindingsModule extends AbstractModule {
     System.out.println(supplierType);
     bind(supplierType).toProvider(supplierProvider);
 */
-
   }
 
   public static ParameterizedType typeOfSupplier(Type type) {

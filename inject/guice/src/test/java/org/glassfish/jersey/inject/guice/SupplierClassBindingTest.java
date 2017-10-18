@@ -40,18 +40,12 @@
 
 package org.glassfish.jersey.inject.guice;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Key;
-import com.google.inject.Provider;
-import com.google.inject.TypeLiteral;
-import com.sun.tools.corba.se.idl.constExpr.GreaterThan;
 import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.inject.Singleton;
-import java.lang.reflect.Type;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.*;
