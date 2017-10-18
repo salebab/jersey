@@ -177,7 +177,7 @@ public class SupplierClassBindingTest {
         assertSame(supplier2, supplier3);
     }
 
-    /*
+
     @Test
     public void testSupplierBeanNamed() {
         BindingTestHelper.bind(injectionManager, binder -> {
@@ -201,5 +201,5 @@ public class SupplierClassBindingTest {
         TestSuppliers.TargetSupplier instance = injectionManager.getInstance(TestSuppliers.TargetSupplier.class);
         assertEquals(TestSuppliers.OTHER_TEST, instance.supplier.get());
     }
-    */
+
 }
