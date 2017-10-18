@@ -3,7 +3,14 @@ package org.glassfish.jersey.inject.guice;
 import com.google.inject.*;
 import com.google.inject.name.Names;
 import com.google.inject.util.Types;
-import org.glassfish.jersey.internal.inject.*;
+import org.glassfish.jersey.internal.inject.AbstractBinder;
+import org.glassfish.jersey.internal.inject.Binding;
+import org.glassfish.jersey.internal.inject.Binding;
+import org.glassfish.jersey.internal.inject.ClassBinding;
+import org.glassfish.jersey.internal.inject.PerLookup;
+import org.glassfish.jersey.internal.inject.PerThread;
+import org.glassfish.jersey.internal.inject.SupplierClassBinding;
+import org.glassfish.jersey.internal.inject.SupplierInstanceBinding;
 import org.glassfish.jersey.internal.util.ExtendedLogger;
 import org.glassfish.jersey.process.internal.RequestScope;
 
@@ -40,12 +47,16 @@ public class JerseyBindingsModule extends AbstractModule {
 
     binder.getBindings().forEach(b -> {
 
-      if(ClassBinding.class.isAssignableFrom(b.getClass())) {
+      if (ClassBinding.class.isAssignableFrom(b.getClass())) {
         bindClass((ClassBinding<?>) b);
       }
 
-      if(SupplierClassBinding.class.isAssignableFrom(b.getClass())) {
+      if (SupplierClassBinding.class.isAssignableFrom(b.getClass())) {
         bindSupplierClassBinding((SupplierClassBinding<?>) b);
+      }
+
+      if (SupplierInstanceBinding.class.isAssignableFrom(b.getClass())) {
+        bindSupplierInstanceBinding((SupplierInstanceBinding<?>) b);
       }
     });
   }
@@ -55,34 +66,77 @@ public class JerseyBindingsModule extends AbstractModule {
     bind(tl).in(transformScope(b.getScope()));
   }
 
-  private void bindSupplierClassBinding(SupplierClassBinding<?> binding) {
-
+  @SuppressWarnings("unchecked")
+  private void bindSupplierInstanceBinding(SupplierInstanceBinding<?> binding) {
     Set<Type> contracts = binding.getContracts();
 
-    Provider supplierProvider = () -> injector.getInstance(binding.getSupplierClass());
+    Type firstContract = null;
+    if (contracts.iterator().hasNext()) {
+      firstContract = contracts.iterator().next();
+      bind(getTypeLiteralKey(binding, firstContract))
+          .toProvider(() -> binding.getSupplier().get())
+          .in(transformScope(binding.getScope()));
+    }
 
+    final Type finalFirstContract = firstContract;
 
     contracts.forEach(contract -> {
+      bind(getSupplierKey(binding, contract))
+          .toProvider(binding::getSupplier)
+          .in(transformScope(binding.getScope()));
 
-      Key k1 = (binding.getName() != null)
-          ? Key.get(typeOfSupplier(contract), Names.named(binding.getName()))
-          : Key.get(typeOfSupplier(contract));
-      bind(k1)
-          .toProvider(supplierProvider)
+      if (contract != finalFirstContract) {
+        bind(getTypeLiteralKey(binding, contract))
+            .toProvider(new InstanceProvider((Class<?>) finalFirstContract))
+            .in(transformScope(binding.getScope()));
+      }
+    });
+  }
+
+  @SuppressWarnings(value = "unchecked")
+  private void bindSupplierClassBinding(SupplierClassBinding<?> binding) {
+
+    final Set<Type> contracts = binding.getContracts();
+    final InstanceProvider instanceProvider = new InstanceProvider(binding.getSupplierClass());
+    final ParameterizedType parameterizedType = Types.newParameterizedType(SupplierValueProvider.class, binding.getSupplierClass());
+
+    bind(TypeLiteral.get(binding.getSupplierClass()))
+        .in(transformScope(binding.getSupplierScope()));
+
+    Type firstContract = null;
+    if (contracts.iterator().hasNext()) {
+      firstContract = contracts.iterator().next();
+      bind(getTypeLiteralKey(binding, firstContract))
+          .toProvider(TypeLiteral.get(parameterizedType))
+          .in(transformScope(binding.getScope()));
+    }
+
+    final Type finalFirstContract = firstContract;
+
+    contracts.forEach(contract -> {
+      bind(getSupplierKey(binding, contract))
+          .toProvider(instanceProvider)
           .in(transformScope(binding.getSupplierScope()));
 
-      Key k2 = (binding.getName() != null)
-          ? Key.get(TypeLiteral.get(contract), Names.named(binding.getName()))
-          : Key.get(TypeLiteral.get(contract));
-      bind(k2)
-          .toProvider(() -> injector.getInstance(binding.getSupplierClass()).get())
-          .in(transformScope(binding.getScope()));
+      if (contract != finalFirstContract) {
+        bind(getTypeLiteralKey(binding, contract))
+            .toProvider(new InstanceProvider((Class<?>) finalFirstContract))
+            .in(transformScope(binding.getScope()));
+      }
     });
-/*
-    TypeLiteral supplierType = TypeLiteral.get(binding.getSupplierClass());
-    System.out.println(supplierType);
-    bind(supplierType).toProvider(supplierProvider);
-*/
+  }
+
+  private static Key getTypeLiteralKey(Binding binding, Type type) {
+    return (binding.getName() != null)
+        ? Key.get(TypeLiteral.get(type), Names.named(binding.getName()))
+        : Key.get(TypeLiteral.get(type));
+  }
+
+
+  private static Key getSupplierKey(Binding binding, Type type) {
+    return (binding.getName() != null)
+        ? Key.get(typeOfSupplier(type), Names.named(binding.getName()))
+        : Key.get(typeOfSupplier(type));
   }
 
   public static ParameterizedType typeOfSupplier(Type type) {

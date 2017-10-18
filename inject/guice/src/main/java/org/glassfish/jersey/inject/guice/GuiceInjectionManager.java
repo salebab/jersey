@@ -2,7 +2,13 @@ package org.glassfish.jersey.inject.guice;
 
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import org.glassfish.jersey.internal.inject.*;
+import org.glassfish.jersey.internal.inject.AbstractBinder;
+import org.glassfish.jersey.internal.inject.Binder;
+import org.glassfish.jersey.internal.inject.Binding;
+import org.glassfish.jersey.internal.inject.Bindings;
+import org.glassfish.jersey.internal.inject.ForeignDescriptor;
+import org.glassfish.jersey.internal.inject.InjectionManager;
+import org.glassfish.jersey.internal.inject.ServiceHolder;
 import org.glassfish.jersey.internal.util.ExtendedLogger;
 
 import java.lang.annotation.Annotation;

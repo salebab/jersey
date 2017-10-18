@@ -1,7 +1,12 @@
 package org.glassfish.jersey.inject.guice;
 
 import com.google.inject.Injector;
-import org.glassfish.jersey.internal.inject.*;
+import org.glassfish.jersey.internal.inject.AbstractBinder;
+import org.glassfish.jersey.internal.inject.Bindings;
+import org.glassfish.jersey.internal.inject.ContextInjectionResolver;
+import org.glassfish.jersey.internal.inject.Injectee;
+import org.glassfish.jersey.internal.inject.InjecteeImpl;
+import org.glassfish.jersey.internal.inject.InjectionResolver;
 import org.glassfish.jersey.internal.util.ReflectionHelper;
 
 import javax.inject.Inject;
