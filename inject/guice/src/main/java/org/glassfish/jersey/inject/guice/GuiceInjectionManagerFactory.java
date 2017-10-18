@@ -23,7 +23,7 @@ public class GuiceInjectionManagerFactory implements InjectionManagerFactory {
 
   private static void assertParentLocatorType(Object parent) {
     if (parent != null && !(parent instanceof Injector || parent instanceof GuiceInjectionManager)) {
-      throw new IllegalArgumentException("Guice - Unknown Parent injection Manager "+ parent.getClass().getSimpleName());
+      throw new IllegalArgumentException("Guice - Unknown Parent injection Manager " + parent.getClass().getSimpleName());
     }
   }
 

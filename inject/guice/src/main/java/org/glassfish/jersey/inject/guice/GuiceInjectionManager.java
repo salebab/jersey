@@ -58,7 +58,8 @@ public class GuiceInjectionManager implements InjectionManager {
 
   @Override
   public void register(Binding binding) {
-    logger.debugLog("Registering binding. Contracts: {0}; Implementations: {1}",  binding.getContracts(), binding.getImplementationType());
+    logger.debugLog("Registering binding. Contracts: {0}; Implementations: {1}",
+        binding.getContracts(), binding.getImplementationType());
 
     binder.bind(binding);
   }
@@ -77,7 +78,7 @@ public class GuiceInjectionManager implements InjectionManager {
 
   @Override
   public void register(Object provider) throws IllegalArgumentException {
-    if(!isRegistrable(provider.getClass())) {
+    if (!isRegistrable(provider.getClass())) {
       throw new IllegalArgumentException("Provider is not registrable");
     }
 

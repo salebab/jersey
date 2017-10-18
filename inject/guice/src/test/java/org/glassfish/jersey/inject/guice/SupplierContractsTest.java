@@ -47,7 +47,9 @@ import org.junit.Test;
 
 import javax.inject.Singleton;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 
 /**
  * Tests that {@link java.util.function.Supplier} can contain multiple contracts.

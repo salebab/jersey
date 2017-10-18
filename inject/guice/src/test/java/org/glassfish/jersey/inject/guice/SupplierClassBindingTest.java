@@ -48,7 +48,9 @@ import org.junit.Test;
 import javax.inject.Singleton;
 import java.util.function.Supplier;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 
 /**
  * Tests that {@link Supplier} can be registered as a class-factory.

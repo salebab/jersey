@@ -1,12 +1,18 @@
 package org.glassfish.jersey.inject.guice;
 
-import com.google.inject.*;
+import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.Scope;
+import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import com.google.inject.util.Types;
 import org.glassfish.jersey.internal.inject.AbstractBinder;
 import org.glassfish.jersey.internal.inject.Binding;
-import org.glassfish.jersey.internal.inject.Binding;
 import org.glassfish.jersey.internal.inject.ClassBinding;
+import org.glassfish.jersey.internal.inject.InstanceBinding;
 import org.glassfish.jersey.internal.inject.PerLookup;
 import org.glassfish.jersey.internal.inject.PerThread;
 import org.glassfish.jersey.internal.inject.SupplierClassBinding;
@@ -49,16 +55,22 @@ public class JerseyBindingsModule extends AbstractModule {
 
       if (ClassBinding.class.isAssignableFrom(b.getClass())) {
         bindClass((ClassBinding<?>) b);
-      }
-
-      if (SupplierClassBinding.class.isAssignableFrom(b.getClass())) {
+      } else if (InstanceBinding.class.isAssignableFrom(b.getClass())) {
+        bindInstance((InstanceBinding<?>) b);
+      } else if (SupplierClassBinding.class.isAssignableFrom(b.getClass())) {
         bindSupplierClassBinding((SupplierClassBinding<?>) b);
-      }
-
-      if (SupplierInstanceBinding.class.isAssignableFrom(b.getClass())) {
+      } else if (SupplierInstanceBinding.class.isAssignableFrom(b.getClass())) {
         bindSupplierInstanceBinding((SupplierInstanceBinding<?>) b);
       }
     });
+  }
+
+  private <T> void bindInstance(InstanceBinding<T> b) {
+    b.getContracts().forEach(c -> {
+      bind(getTypeLiteralKey(b, c))
+          .toInstance(b.getService());
+    });
+
   }
 
   private void bindClass(ClassBinding<?> b) {
@@ -98,7 +110,8 @@ public class JerseyBindingsModule extends AbstractModule {
 
     final Set<Type> contracts = binding.getContracts();
     final InstanceProvider instanceProvider = new InstanceProvider(binding.getSupplierClass());
-    final ParameterizedType parameterizedType = Types.newParameterizedType(SupplierValueProvider.class, binding.getSupplierClass());
+    final ParameterizedType parameterizedType = Types.newParameterizedType(SupplierValueProvider.class,
+        binding.getSupplierClass());
 
     bind(TypeLiteral.get(binding.getSupplierClass()))
         .in(transformScope(binding.getSupplierScope()));
