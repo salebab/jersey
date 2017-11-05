@@ -1,6 +1,5 @@
 package org.glassfish.jersey.inject.guice;
 
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.internal.inject.InjectionManagerFactory;
@@ -14,11 +13,6 @@ public class GuiceInjectionManagerFactory implements InjectionManagerFactory {
   public InjectionManager create(Object parent) {
     Injector injector = resolveInjectorParent(parent);
     return new GuiceInjectionManager(injector);
-  }
-
-  @Override
-  public InjectionManager create() {
-    return new GuiceInjectionManager(Guice.createInjector());
   }
 
   private static void assertParentLocatorType(Object parent) {
